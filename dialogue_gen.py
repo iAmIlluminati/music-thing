@@ -83,46 +83,47 @@ def generate_and_save_dialogue(
         print(f"An unexpected error occurred: {e}")
         return False
 
-# # --- Example Usage ---
-# if __name__ == "__main__":
-#     print("--- Testing Dialogue Generation ---")
+# --- Example Usage ---
+if __name__ == "__main__":
+    print("--- Testing Dialogue Generation ---")
 
-#     # --- Configuration for Test ---
-#     test_text = "Hello! This is a test of the text-to-speech system."
-#     test_speaker_id = 23 # Adjust speaker ID if needed
-#     # Define where to save the output - creates an 'output_audio' subdir if needed
-#     output_directory = "output_audio"
-#     output_filename = f"dialogue_test_{int(time.time())}.wav" # Unique filename
-#     full_output_path = os.path.join(output_directory, output_filename)
+    # --- Configuration for Test ---
+    test_text = "Hello! This is a test of the text-to-speech system."
+    test_speaker_id = 33 # Adjust speaker ID if needed
+    # Define where to save the output - creates an 'output_audio' subdir if needed
+    output_directory = "output_audio"
+    output_filename = f"dialogue_test_{int(time.time())}.wav" # Unique filename
+    full_output_path = os.path.join(output_directory, output_filename)
 
-#     # --- Run the Function ---
-#     success = generate_and_save_dialogue(
-#         text=test_text,
-#         speaker_id=test_speaker_id,
-#         output_filepath=full_output_path
-#     )
+    # --- Run the Function ---
+    success = generate_and_save_dialogue(
+        text=test_text,
+        speaker_id=test_speaker_id,
+        output_filepath=full_output_path
+    )
 
-#     # --- Check Result ---
-#     if success:
-#         print(f"\nTest successful! Audio saved to: {os.path.abspath(full_output_path)}")
-#         # You can add code here to play the audio if you have a library like `sounddevice` or `playsound`
-#         # e.g., import playsound; playsound.playsound(full_output_path)
-#     else:
-#         print("\nTest failed. Check error messages above.")
+    # --- Check Result ---
+    if success:
+        print(f"\nTest successful! Audio saved to: {os.path.abspath(full_output_path)}")
+        # You can add code here to play the audio if you have a library like `sounddevice` or `playsound`
+        # e.g., import playsound; playsound.playsound(full_output_path)
+    else:
+        print("\nTest failed. Check error messages above.")
 
-#     print("\n--- Testing with a different speaker ---")
-#     test_text_2 = "This is another test with a different voice."
-#     test_speaker_id_2 = 1 # Try a different speaker ID
-#     output_filename_2 = f"dialogue_test_speaker{test_speaker_id_2}_{int(time.time())}.wav"
-#     full_output_path_2 = os.path.join(output_directory, output_filename_2)
+    # print("\n--- Testing with a different speaker ---")
+    # for i in range(0,100):
+    #     test_text_2 = "This is another test with a different voice."
+    #     test_speaker_id_2 = i # Try a different speaker ID
+    #     output_filename_2 = f"dialogue_test_speaker{test_speaker_id_2}_{int(time.time())}.wav"
+    #     full_output_path_2 = os.path.join(output_directory, output_filename_2)
 
-#     success_2 = generate_and_save_dialogue(
-#         text=test_text_2,
-#         speaker_id=test_speaker_id_2,
-#         output_filepath=full_output_path_2
-#     )
+    #     success_2 = generate_and_save_dialogue(
+    #         text=test_text_2,
+    #         speaker_id=test_speaker_id_2,
+    #         output_filepath=full_output_path_2
+    #     )
 
-#     if success_2:
-#         print(f"\nSecond test successful! Audio saved to: {os.path.abspath(full_output_path_2)}")
-#     else:
-#         print("\nSecond test failed.")
+    # if success_2:
+    #     print(f"\nSecond test successful! Audio saved to: {os.path.abspath(full_output_path_2)}")
+    # else:
+    #     print("\nSecond test failed.")
