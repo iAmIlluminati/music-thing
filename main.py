@@ -27,6 +27,8 @@ OUTPUT_DIR = "final_audio_output"
 TEMP_AUDIO_DIR = os.path.join(OUTPUT_DIR, "temp_audio")
 DIALOGUE_SPEAKER_ID = 33 # As requested
 MUSIC_OVERLAY_VOLUME_REDUCTION_DB = 20 # Reduce music volume by 20 dB for overlay (approx 10% amplitude)
+BGM_OVERLAY_VOLUME_REDUCTION_DB = 26 # Reduce BGM volume by 26 dB for overlay (approx 5% amplitude)
+BGM_DURATION_SECONDS = 30 # Generate a 30-second BGM track
 
 def get_audio_duration_ms(filepath: str) -> Optional[int]:
     """Gets the duration of an audio file in milliseconds using pydub."""
@@ -51,21 +53,55 @@ def main():
 
     # --- 1. Define Input & Get AI Script ---
     sample_script = """
-track_1:
-- Welcome explorers to the Solar System Sprint!
-track_2:
-- Question 1: Which planet is known as the Red Planet?
-- [SFX: MYSTERIOUS WHOOSH]
-track_3:
-- Thinking time... 5 seconds!
-- [SFX: FUTURISTIC TICKING CLOCK 5s]
-track_4:
-- Time is up!
-track_5:
-- The correct answer is... Mars!
-- [SFX: CELEBRATORY CHIME]
-track_6:
-- Great job if you got it right! Let's move on.
+Track 1
+
+Excited voice of a quiz master 
+
+Hello and welcome to the “Solar System” Quiz! 
+My name is Milo and I have a very fun quiz for you today! I will ask you a question and give you four choices. You will have ten seconds to answer each question. 
+If you’re ready with the answer, just say ‘Ready’
+
+Track 2
+
+Let’s go!
+
+Track 3
+
+Tense music
+
+Music fades
+
+Track 4
+
+Which sea creature has eight arms?
+
+Track 5
+
+Light background music - sea sounds
+
+Squid
+Jellyfish
+Lion Fish
+Octopus
+
+Track 6
+
+10 sec Countdown timer sfx
+
+Track 7
+
+The correct answer is option d Octopus. 
+
+Track 8
+
+Congratulations.
+Your answer is right. You get 5 points.
+Applause sound 
+
+Track 9
+
+If you got it wrong, no problem, you’ll get the next one. Here we go!
+
 """
 
     input_data = prompt.AudioScriptInput(
@@ -227,20 +263,73 @@ track_6:
             else:
                  print(f"  Warning: Track {i+1} resulted in empty audio.")
 
-
-        # --- 4. Export Final Combined Audio ---
+        # --- 4. Export First Combined Audio (without overall BGM) ---
         if len(final_audio) > 0 and processing_successful:
             timestamp = int(time.time())
             final_filename = f"audio_quiz_output_{timestamp}.mp3" # Export as MP3 for smaller size
             final_filepath = os.path.join(OUTPUT_DIR, final_filename)
-            print(f"\n--- Exporting Final Combined Audio ---")
+            print(f"\n--- Exporting First Combined Audio (without overall BGM) ---")
             print(f"Saving to: {final_filepath}")
             try:
                 final_audio.export(final_filepath, format="mp3")
-                print(f"Successfully exported final audio!")
+                print(f"Successfully exported first audio file!")
             except Exception as e:
-                print(f"ERROR: Failed to export final audio: {e}")
+                print(f"ERROR: Failed to export first audio: {e}")
                 processing_successful = False
+        
+        # --- 5. Generate and apply overall BGM track ---
+        if len(final_audio) > 0 and processing_successful:
+            # Extract overall BGM description from JSON
+            overall_bgm_description = audio_json_output.get("overall_bgm", "")
+            if overall_bgm_description:
+                print(f"\n--- Generating Overall BGM Track (30s) ---")
+                print(f"BGM Description: '{overall_bgm_description[:100]}...'")
+                
+                # Generate the overall BGM
+                bgm_filename = f"overall_bgm_{timestamp}.wav"
+                bgm_filepath = os.path.join(TEMP_AUDIO_DIR, bgm_filename)
+                
+                if generate_and_save_music(overall_bgm_description, BGM_DURATION_SECONDS, bgm_filepath):
+                    try:
+                        # Load the BGM
+                        bgm_segment = AudioSegment.from_wav(bgm_filepath)
+                        
+                        # Calculate how many times to loop the BGM
+                        final_duration_ms = len(final_audio)
+                        loops_needed = math.ceil(final_duration_ms / len(bgm_segment))
+                        
+                        print(f"Main track duration: {final_duration_ms/1000:.2f}s")
+                        print(f"BGM duration: {len(bgm_segment)/1000:.2f}s")
+                        print(f"Looping BGM {loops_needed} times to cover main track")
+                        
+                        # Create extended BGM by looping
+                        extended_bgm = bgm_segment * loops_needed
+                        
+                        # Trim to match main track duration exactly
+                        extended_bgm = extended_bgm[:final_duration_ms]
+                        
+                        # Reduce volume for background
+                        quieter_bgm = extended_bgm - BGM_OVERLAY_VOLUME_REDUCTION_DB
+                        print(f"Applying BGM at reduced volume ({BGM_OVERLAY_VOLUME_REDUCTION_DB} dB reduction)")
+                        
+                        # Overlay with main track
+                        final_audio_with_bgm = final_audio.overlay(quieter_bgm)
+                        
+                        # Export second file with BGM
+                        final_with_bgm_filename = f"audio_quiz_with_bgm_{timestamp}.mp3"
+                        final_with_bgm_filepath = os.path.join(OUTPUT_DIR, final_with_bgm_filename)
+                        print(f"\n--- Exporting Second Combined Audio (with overall BGM) ---")
+                        print(f"Saving to: {final_with_bgm_filepath}")
+                        
+                        final_audio_with_bgm.export(final_with_bgm_filepath, format="mp3")
+                        print(f"Successfully exported second audio file with BGM!")
+                        
+                    except Exception as e:
+                        print(f"ERROR: Failed to process or export BGM version: {e}")
+                else:
+                    print(f"ERROR: Failed to generate overall BGM. Skipping second audio file.")
+            else:
+                print(f"No overall BGM description found in the JSON response. Skipping second audio file.")
         elif not processing_successful:
              print("\n--- Final Audio Export Skipped due to errors during processing ---")
         else:
@@ -250,7 +339,7 @@ track_6:
         print(f"\n--- An unexpected error occurred during audio processing: {e} ---")
         processing_successful = False
     finally:
-        # --- 5. Cleanup Temporary Files ---
+        # --- 6. Cleanup Temporary Files ---
         if os.path.exists(TEMP_AUDIO_DIR):
             print(f"\nCleaning up temporary directory: {TEMP_AUDIO_DIR}")
             try:
